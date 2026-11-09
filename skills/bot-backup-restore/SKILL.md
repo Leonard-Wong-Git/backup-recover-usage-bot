@@ -1,7 +1,8 @@
 ---
 name: bot-backup-restore
-description: 當用戶要備份 Bot 團隊的檔案、記憶、定時任務、技能及設定（每日、每週或即時備份），或要按備份回復、搬到其他 AI 平台，或查看用量 dashboard 時使用。
+description: "當用戶要備份 Bot 團隊的檔案、記憶、定時任務、技能及設定（每日、每週或即時備份），或要按備份回復、搬到其他 AI 平台，或查看用量 dashboard 時使用。"
 ---
+
 # Bot 備份與回復
 
 ## 角色
@@ -42,60 +43,62 @@ Bot 的對話、記憶、定時任務及連接器本身存於雲端；按「Upda
 - 兩區內容必須一致；記憶本身是文字，可只寫一區並註明「兩者通用」。
 
 ## 主選單
-設定完成後及每次後續對話開始時，顯示可點選的主選單卡（不是文字清單）：「即時備份（bot 電腦）」、「雲端副本」、「回復」、「用量 dashboard」、「檢查更新」、「更改設定」、「完成」。備份及回復各自一按即開始，是兩個獨立選項，不會同時執行。每項操作結束或取消後返回主選單；選「完成」則結束，不再彈出。若有未完成的精靈，保留進度；不要因顯示選單而略過確認。「上一步」返回上一張卡；「繼續」／「下一步」重新顯示目前未回答的卡，不猜測、不略過。
+設定完成後及每次後續對話開始時，顯示可點選的主選單卡（不是文字清單）：「即時備份（bot 電腦）」、「雲端副本」、「複製到這部電腦／外置硬碟」、「回復」、「用量 dashboard」、「檢查更新」、「更改設定」、「完成」。備份及回復各自一按即開始，是兩個獨立選項，不會同時執行。每項操作結束或取消後返回主選單；選「完成」則結束，不再彈出。若有未完成的精靈，保留進度；不要因顯示選單而略過確認。「上一步」返回上一張卡；「繼續」／「下一步」重新顯示目前未回答的卡，不猜測、不略過。
 - 「即時備份（bot 電腦）」：一按即執行唯一的「備份」程序，包含所有角色的記憶、定時任務、技能、設定及工作檔案，不問範圍或詳略。
 - 「雲端副本」：將最新備份複製到 Google Drive 或 Notion；尚無備份時，先執行「即時備份（bot 電腦）」。按下方儲存規則處理。
-- 「回復」：一按即開始回復，按下方規則逐個角色確認。
+- 「複製到這部電腦／外置硬碟」：一律顯示。有桌面來源標記時按下方儲存規則用 CopyFromBox；無標記時只提示須在電腦開啟本對話再選此項，備份暫留 bot 電腦。不得猜測裝置。
 - 「用量 dashboard」：按下方「用量 dashboard」章節執行，分「用量」、「備份紀錄」、「回復紀錄」三個分頁。
 - 「檢查更新」：按版本章節比對。
-- 「更改設定」：只更改雲端副本、dashboard 圖片尺寸（iPad 橫向／iPad 直向／手機）、備份提醒日數（預設 7 日）、舊備份清理門檻（預設 1 GB 或 10 份）及已批准的自動備份安排，並記住所選；桌面副本依下方裝置規則顯示。自動備份僅在用戶批准時間及時區後建立。
+- 「更改設定」：只更改雲端副本、備份提醒日數（預設 7 日）、舊備份清理門檻（預設 1 GB 或 10 份）及已批准的自動備份安排，並記住所選。自動備份僅在用戶批准時間及時區後建立。
 
 ## 用量 dashboard
-三個分頁：「用量」、「備份紀錄」、「回復紀錄」。只在用戶於主選單選擇或按「更新」時執行，不建立定時任務，任何步驟都不會自動執行。保持便宜：最多呼叫一次用量工具，不閱讀其他 bot 的對話或檔案；切換分頁只送出已繪製的圖片，不重新查詢。
-1. 開啟或按「更新」：呼叫 CheckSubscriptionUsage 一次（breakdown ["bot","routine"]，limit 10）；只有報告顯示本週剛重設、佔比幾乎為零時，才改用 period "last_7_days" 再呼叫一次。用 shell 把報告原文一字不改存成 `Bot 備份/用量/report-YYYY-MM-DD-HHMM.txt`。
-2. 如 `Bot 備份/用量/usage_dash.py` 不存在，或其第二行不是「dashboard v1.4」，用下方程式碼寫入（只寫一次，日後重用）。執行：`python3 "Bot 備份/用量/usage_dash.py" --lang zh --input <報告檔> --view <尺寸>`（English 用 `--lang en`）。尺寸預設 `1180x820`（iPad 橫向）；用戶可在「更改設定」改為 `820x1180`（iPad 直向）或 `390x844`（手機），記住所選，不猜測裝置。如已知某定時任務最近因自身錯誤而失敗（不包括用量用盡），加上 `--failing "名稱"`。
-3. 程式把 JSON 快照存為 `Bot 備份/用量/YYYY-MM-DD-HHMM.json`，與上一份比較，讀取 `Bot 備份/紀錄/` 的 backups.jsonl 及 restores.jsonl，用內置的靜態 HTML／CSS（淺色、響應式，手機寬度自動變成單欄）經無頭瀏覽器為每個分頁各輸出一張 PNG，一屏完成。輸出 JSON：`png`（usage／backups／restores）、`text`（各分頁文字後備）、`suggestions`、`menu`。
-4. 顯示：先送「用量」分頁的 PNG，另附一句：每週用量上限已用多少及重設時間（按報告原文）。PNG 為 null（沒有瀏覽器或字型）就改為顯示該分頁的 `text`。首次使用時說明下次才開始比較。
+三個分頁：「用量」、「備份紀錄」、「回復紀錄」。只在用戶於主選單選擇或按「更新」時執行，不建立定時任務，任何步驟都不會自動執行。保持便宜：最多呼叫一次用量工具，不閱讀其他 bot 的對話或檔案；分頁在 Page 內點選切換，不重新查詢。
+1. 開啟或按「更新」：呼叫 CheckSubscriptionUsage 一次（breakdown ["bot","routine"]，limit 10）；只有報告顯示本週剛重設、佔比幾乎為零時，才改用 period "last_7_days" 再呼叫一次。用 shell 把報告原文一字不改存成 `/workspace/Bot 備份/用量/report-YYYY-MM-DD-HHMM.txt`。
+2. 如 `/workspace/Bot 備份/用量/usage_dash.py` 不存在，或其第二行不是「dashboard v1.4」，用下方程式碼寫入（只寫一次，日後重用）。執行：`python3 "/workspace/Bot 備份/用量/usage_dash.py" --lang zh --input <報告檔>`（English 用 `--lang en`）。如已知某定時任務最近因自身錯誤而失敗（不包括用量用盡），加上 `--failing "名稱"`。
+3. 程式把 JSON 快照存為 `/workspace/Bot 備份/用量/YYYY-MM-DD-HHMM.json`，與上一份比較，讀取 `/workspace/Bot 備份/紀錄/` 的 backups.jsonl 及 restores.jsonl，輸出資料 JSON：`usage`、`backups`（時間及位置）、`restores`（日期及內容）、`text`（各分頁文字後備）、`suggestions`、`menu`、`tabs`、`footer`、`title`、`summary`。不輸出圖片，不依賴瀏覽器。
+4. 顯示：先讀取 Cursor 托管的 `canvas` 技能（`/home/box/agent-data/managed-skills/skills/canvas/SKILL.md`），按其規則用 WriteCanvas 建立可互動的 Grok Page（寬度 `wide`，語言跟隨用戶：中文設 `lang="zh-Hant"`）。把程式 JSON 內嵌於 Page：用 `Segmented` 切換三個分頁，每個分頁約一屏（iPad）；`Grid` 在手機自動單欄；淺色／深色跟隨宿主主題；建議只顯示程式輸出（≥約 5%、最多兩條，一句）；頁腳置中顯示 m 標誌及小寫「minny.app」連結（https://minny.app），觸控目標至少 44px；示範資料不加「示例」標籤。對話只寫一兩句（每週用量上限已用多少及重設時間，按報告原文）並附上 Page 連結。按「更新」時以同一 `canvas_id` 覆寫，不另建新 Page。WriteCanvas 不可用時改顯示對應 `text`。首次使用時說明下次才開始比較。
 5. 建議：程式只列受影響佔比約 5% 或以上的項目，最多兩條，每條一句，例如「合併小健三個運動同步任務（佔約 15%）」；不列含糊項目；沒有合資格項目時顯示「暫無值得調整的項目」。照列程式輸出，不自行增加建議，不計算或預測可省多少用量。
-6. 每張 dashboard 圖片之後一律顯示一張可點選的選單卡，選項取自 `menu`：「用量」、「備份紀錄」、「回復紀錄」（切換分頁，送出對應 PNG）、「更新」（由第 1 步重新執行）、每條建議一個「照做：<建議>」、「返回主選單」。每個畫面都保留「返回主選單」；選它才返回主選單。
+6. 顯示 Page（或文字後備）之後一律顯示一張可點選的選單卡，選項取自 `menu`：「更新」（由第 1 步重新執行）、每條建議一個「照做：<建議>」、「返回主選單」。分頁在 Page 內切換，選單不再列分頁。每個畫面都保留「返回主選單」；選它才返回主選單。
 7. 未經用戶按「照做：…」，絕不改動任何東西。按下後：自己的定時任務用 UpdateRoutine，先以 action "get" 讀取，再修改原有指示，不重寫；只暫停，不刪除。合併定時任務時，先用一張卡列出合併後的時間及內容讓用戶確認，新任務建立後才暫停舊任務。其他 bot 的定時任務或技能不能直接修改：告訴用戶在該 bot 的定時任務列表修改，或經用戶同意後用一則簡短訊息（SendToAgent）請該 bot 修改。不建議更改 Grok Bot 內建的 check-in。完成後說明改了甚麼及如何還原，再顯示同一張選單卡。
 8. 用詞跟隨報告：「每週用量上限」、「佔比」；不提工具名稱、選項、tokens 或 id。
 9. `用量/` 及 `紀錄/` 文件夾屬備份目的地的一部分，備份時不納入 files/。
 
 ## 備份及回復紀錄
 每次備份及回復完成（包括未完成）後，用程式的紀錄模式加一行，只加不改，不存任何密碼、金鑰、權杖或登入資料（程式會自動略去可疑欄位）：
-- 備份：`python3 "Bot 備份/用量/usage_dash.py" --log backup --data '<JSON>'`，JSON 包括 `time`（Europe/London，YYYY-MM-DD HH:MM）、`locations`（每項 `type` 為 bot／drive／notion／desktop／download，及 `path`）、`roles`（角色數目）、`counts`（`memories`、`routines`、`skills`、`settings`）、`size`、`status`（complete 或 partial）及 `notes`（缺漏簡述）。雲端副本或桌面副本完成後，另加一行同一 `time` 的紀錄，列出新增位置。
+- 備份：`python3 "/workspace/Bot 備份/用量/usage_dash.py" --log backup --data '<JSON>'`，JSON 包括 `time`（Europe/London，YYYY-MM-DD HH:MM）、`locations`（每項 `type` 為 bot／drive／notion／desktop／download，及 `path`）、`roles`（角色數目）、`counts`（`memories`、`routines`、`skills`、`settings`）、`size`、`status`（complete 或 partial）及 `notes`（缺漏簡述）。雲端副本或桌面副本完成後，另加一行同一 `time` 的紀錄，列出新增位置。
 - 回復：`--log restore --data '<JSON>'`，包括 `date`、`source`（來源備份日期或位置）、`roles`（每項 `name` 及 `mode`：new 或 merged）、`added`（`memories`、`routines`、`skills` 新增數目）、`skipped`（略過項目清單）及 `status`。
 - 備份紀錄另加 `role_names`（角色名稱清單）及 `size_bytes`（用 shell 的 du 計算，不打開檔案），以便比較。
-- 紀錄存於 `Bot 備份/紀錄/backups.jsonl` 及 `restores.jsonl`。
+- 紀錄存於 `/workspace/Bot 備份/紀錄/backups.jsonl` 及 `restores.jsonl`。
 
 ## 兩次備份比較
 只用紀錄（及已有的 manifest.json 數字）比較，不閱讀工作檔案。比較最新與上一次備份：記憶、定時任務、技能及設定數目的 +／−，新增或少了的角色，以及大小變化。同一時間的雲端或桌面副本紀錄只視為新增位置，不當作另一次備份。「備份紀錄」分頁會顯示比較；備份成功訊息只附一句 `diff_line`。
 
 ## 備份提醒（只讀本機檔案）
-每次顯示主選單前，執行 `python3 "Bot 備份/用量/usage_dash.py" --check 1 --remind-days <N>`（N 預設 7，可在「更改設定」修改）。這只讀取本機紀錄及文件夾大小，不呼叫用量工具，亦不建立定時任務。輸出的 `reminder` 有內容時（例如「上次備份已是 9 日前」或「尚未有備份紀錄」），在主選單卡上方加一行顯示；沒有內容就不顯示。程式未存在時先按「用量 dashboard」第 2 步寫入。
+每次顯示主選單前，執行 `python3 "/workspace/Bot 備份/用量/usage_dash.py" --check 1 --remind-days <N>`（N 預設 7，可在「更改設定」修改）。這只讀取本機紀錄及文件夾大小，不呼叫用量工具，亦不建立定時任務。輸出的 `reminder` 有內容時（例如「上次備份已是 9 日前」或「尚未有備份紀錄」），在主選單卡上方加一行顯示；沒有內容就不顯示。程式未存在時先按「用量 dashboard」第 2 步寫入。
 
 ## 舊備份清理
-- 每次備份完成後，用同一 `--check 1` 輸出（可加 `--cleanup-gb <GB> --cleanup-max <份數>`，預設 1 GB 及 10 份）。只有當 `Bot 備份/` 下日期文件夾的總大小超過門檻，或份數超過上限時，`cleanup` 才會列出建議刪除的最舊備份，並一律保留最新三份。
+- 每次備份完成後，用同一 `--check 1` 輸出（可加 `--cleanup-gb <GB> --cleanup-max <份數>`，預設 1 GB 及 10 份）。只有當 `/workspace/Bot 備份/` 下日期文件夾的總大小超過門檻，或份數超過上限時，`cleanup` 才會列出建議刪除的最舊備份，並一律保留最新三份。
 - 用一張可點選的確認卡列出每個文件夾的完整路徑及大小，選項只有「刪除這些」／「保留」。未經用戶按「刪除這些」，絕不刪除任何東西；選「保留」即不再在本次對話提出。
-- 按「刪除這些」後，只執行 `python3 "Bot 備份/用量/usage_dash.py" --prune "<路徑1>|<路徑2>"`。程式只刪除 `Bot 備份/` 下的日期文件夾，拒絕最新三份、`用量/`、`紀錄/` 及其他路徑。只限 bot 電腦，絕不改動 Google Drive、Notion 或桌面上的副本。完成後報告已刪除的文件夾，再返回主選單。
+- 按「刪除這些」後，只執行 `python3 "/workspace/Bot 備份/用量/usage_dash.py" --prune "<路徑1>|<路徑2>"`。程式只刪除 `/workspace/Bot 備份/` 下的日期文件夾，拒絕最新三份、`用量/`、`紀錄/` 及其他路徑。只限 bot 電腦，絕不改動 Google Drive、Notion 或桌面上的副本。完成後報告已刪除的文件夾，再返回主選單。
 
 程式碼（dashboard 及紀錄專用，自行編寫，不含第三方內容）：
 ```python
 #!/usr/bin/env python3
 # 備份回復專員 dashboard v1.4 (usage + backup log + restore log); own code, no third-party content.
-# Render:  usage_dash.py --lang zh|en [--input report.txt] [--view 1180x820] [--failing "a,b"]
+# Data:    usage_dash.py --lang zh|en [--input report.txt] [--failing "a,b"]
 # Log:     usage_dash.py --log backup|restore --data '{json}'
-import argparse,datetime,glob,html,json,os,re,shutil,subprocess
+# Check:   usage_dash.py --check 1 [--remind-days N]
+# Prune:   usage_dash.py --prune "path1|path2"
+import argparse,datetime,glob,json,os,re,shutil
 try:
     from zoneinfo import ZoneInfo;TZ=ZoneInfo('Europe/London')
 except Exception: TZ=None
 p=argparse.ArgumentParser()
-for k,d in [('--lang','zh'),('--input',''),('--dir','Bot 備份/用量'),('--logs','Bot 備份/紀錄'),('--out',''),
-            ('--view','1180x820'),('--failing',''),('--log',''),('--data',''),('--root','Bot 備份'),('--remind-days','7'),
+for k,d in [('--lang','zh'),('--input',''),('--dir','/workspace/Bot 備份/用量'),('--logs','/workspace/Bot 備份/紀錄'),('--out',''),
+            ('--view',''),('--failing',''),('--log',''),('--data',''),('--root','/workspace/Bot 備份'),('--remind-days','7'),
             ('--cleanup-gb','1'),('--cleanup-max','10'),('--check',''),('--prune','')]: p.add_argument(k,default=d)
 a=p.parse_args();Z=a.lang!='en';T=lambda zh,en:zh if Z else en
-NOW=datetime.datetime.now(TZ);e=html.escape
+NOW=datetime.datetime.now(TZ)
 # ---------- 紀錄（只存允許的欄位，絕不存密碼、金鑰或登入資料） ----------
 BAD=re.compile(r'password|passwd|token|secret|api[_-]?key|cookie|bearer|密碼|金鑰|登入',re.I)
 def clean(o):
@@ -126,7 +129,7 @@ def mb(r):
 def fmt_mb(v): return f'{v/1000:.1f} GB' if abs(v)>=1000 else f'{v:.0f} MB'
 def diff(cur,prev):
     if not cur or not prev: return None
-    c,q=cur.get('counts',{}),prev.get('counts',{});o={'counts':{},'sample':bool(cur.get('sample') or prev.get('sample'))}
+    c,q=cur.get('counts',{}),prev.get('counts',{});o={'counts':{}}
     for k in ('memories','routines','skills','settings'):
         if isinstance(c.get(k),int) and isinstance(q.get(k),int): o['counts'][k]=c[k]-q[k]
     a1,a0=set(cur.get('role_names') or []),set(prev.get('role_names') or [])
@@ -256,9 +259,8 @@ for b,r,v in R:
     elif (v['runs'] or 0)>=7: sug.append((v['share'],'freq',T(f'把「{r}」改為只在工作日執行',f'Run "{r}" on weekdays only')+PCT(v['share']),[r]))
 sug=sorted([x for x in sug if x[0]>=5],key=lambda x:-x[0])[:2]
 NONE=T('暫無值得調整的項目','Nothing worth changing right now')
-# ---------- 文字（後備） ----------
+# ---------- 文字（後備）及結構化資料（供 Grok Page） ----------
 LOC={'bot':T('bot 電腦','Bot computer'),'drive':'Google Drive','notion':'Notion','desktop':T('桌面副本','Desktop copy'),'download':T('下載 .zip','.zip download')}
-ICON={'bot':'▣','drive':'△','notion':'N','desktop':'⌂','download':'↓'}
 CN=[('memories',T('記憶','Memories')),('routines',T('定時任務','Routines')),('skills',T('技能','Skills')),('settings',T('設定','Settings'))]
 ST=lambda s:T('完整','Complete') if s=='complete' else T('部分完成','Partial')
 def ago(t):
@@ -268,126 +270,48 @@ def ago(t):
 def locs(r): return T('、',', ').join(LOC.get(l.get('type'),l.get('type','')) for l in r.get('locations',[]))
 TX={'usage':'\n'.join([T('用量','Usage')+f" {snap['time']}",T('已用','Used')+f": {snap['used'] or '—'}  "+T('重設','Resets')+f": {RESET} ({LEFT})"]
      +[f"- {DN(b)}: {v['share']:g}%" for b,v in sorted(snap['bots'].items(),key=lambda x:-x[1]['share'])]+[T('建議','Suggestions')+':']+([f'  {i+1}. {s[2]}' for i,s in enumerate(sug)] or ['  '+NONE])),
-    'backups':'\n'.join([T('備份紀錄','Backup log')]+[f"- {r.get('time')} · {locs(r)} · {ST(r.get('status'))}"+(' ['+T('示例','sample')+']' if r.get('sample') else '') for r in BK[:6]] or [T('未有備份紀錄','No backups yet')]),
-    'restores':'\n'.join([T('回復紀錄','Restore log')]+[f"- {r.get('date')} · {T('來源','from')} {r.get('source')} · "+', '.join(x.get('name','') for x in r.get('roles',[]))+(' ['+T('示例','sample')+']' if r.get('sample') else '') for r in RS[:6]] or [T('未有回復紀錄','No restores yet')])}
-# ---------- HTML ----------
-CSS='''*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}
-body{font-family:"Inter","Noto Sans CJK TC","Noto Sans CJK HK",system-ui,sans-serif;background:#eef1f6;color:#151a26;-webkit-font-smoothing:antialiased}
-.app{height:100vh;display:flex;flex-direction:column;gap:14px;padding:22px 34px 10px}
-.top{display:flex;align-items:center;gap:14px}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(140deg,#4f7cff,#7a5cff);display:grid;place-items:center;color:#fff;font-size:21px;box-shadow:0 6px 16px #4f7cff40}
-.brand b{display:block;font-size:19px;letter-spacing:.2px}.brand small{color:#7a8396;font-size:13px}
-.tabs{margin-left:auto;display:flex;background:#e2e6ee;border-radius:12px;padding:4px;gap:2px}.tabs span{padding:8px 18px;border-radius:9px;font-size:15px;color:#596275;font-weight:500;white-space:nowrap}
-.tabs .on{background:#fff;color:#151a26;font-weight:650;box-shadow:0 1px 3px #0002}
-.main{flex:1;min-height:0;display:grid;gap:16px}
-.card{background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 1px 2px #0000000d,0 8px 24px #1b2a4a0d;min-height:0;overflow:hidden;display:flex;flex-direction:column}
-h3{margin:0 0 14px;font-size:14px;color:#7a8396;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
-.u{grid-template-columns:330px 1fr;grid-template-rows:1fr auto}
-.ring{width:190px;height:190px;border-radius:50%;margin:6px auto 16px;background:conic-gradient(#4f7cff calc(var(--p)*1%),#e8ecf3 0);display:grid;place-items:center}
-.ring div{width:150px;height:150px;border-radius:50%;background:#fff;display:grid;place-items:center;text-align:center}.ring b{font-size:38px;letter-spacing:-1px}.ring small{display:block;color:#7a8396;font-size:13px}
-.kv{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid #eef0f4;font-size:15px}.kv span{color:#7a8396}
-.bar{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;margin:0 0 13px}.bar span{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar b{font-size:15px;font-variant-numeric:tabular-nums}
-.bar i{grid-column:1/3;height:8px;border-radius:4px;background:#eef1f6;overflow:hidden}.bar i::after{content:"";display:block;height:100%;width:calc(var(--w)*1%);background:linear-gradient(90deg,#4f7cff,#7a5cff);border-radius:4px}
-.bar.x i::after{background:#c3c9d6}.bars{flex:1;display:flex;flex-direction:column;justify-content:space-around}.bars .bar{margin:0}
-.det{margin-top:auto;border-top:1px solid #eef0f4;padding-top:12px}.det div{display:grid;grid-template-columns:110px 1fr;gap:10px;padding:5px 0;font-size:14px}.det span{color:#7a8396}.det code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;color:#3a4256;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}.empty::before{content:"";width:56px;height:56px;border-radius:16px;background:#f1f4fa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa2b2' stroke-width='1.8'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E") center/26px no-repeat}
-.sg{grid-column:1/3;display:flex;flex-direction:row;gap:14px;align-items:center;padding:16px 22px}.sg .t{font-size:14px;color:#7a8396;font-weight:600;white-space:nowrap}
-.pill{display:inline-flex;align-items:center;gap:8px;background:#f2f5ff;color:#2d4fd6;border:1px solid #dfe6ff;border-radius:999px;padding:8px 14px;font-size:15px;font-weight:550}
-.pill.m{background:#f4f5f8;color:#7a8396;border-color:#e6e8ee;font-weight:500}.chg{margin-left:auto;font-size:14px;color:#7a8396;white-space:nowrap}
-.b{grid-template-columns:1.25fr 1fr}
-.hero .when{font-size:34px;font-weight:700;letter-spacing:-.5px;margin:2px 0 4px}.sub{color:#7a8396;font-size:14px}
-.st{display:inline-block;font-size:13px;font-weight:650;padding:4px 10px;border-radius:999px;margin-left:8px;vertical-align:middle}.ok{background:#e3f7ec;color:#14804a}.pa{background:#fff3df;color:#a35c00}
-.chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 16px}.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid #e3e7ef;border-radius:10px;padding:6px 11px;font-size:14px;background:#fafbfd}
-.chip i{font-style:normal;width:20px;height:20px;border-radius:6px;background:#eef2ff;color:#4f7cff;display:grid;place-items:center;font-size:12px;font-weight:700}
-.chip.new i{background:#e3f7ec;color:#14804a}.chip.mg i{background:#fff3df;color:#a35c00}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;flex:1;max-height:150px}.tile{display:flex;flex-direction:column;justify-content:center;padding:14px 18px}.tile{background:#f6f8fb;border-radius:12px;padding:12px 14px}.tile b{display:block;font-size:40px;letter-spacing:-.5px}.tile span{font-size:13px;color:#7a8396}
-.note{margin-top:14px;font-size:14px;color:#a35c00;background:#fff8ec;border-radius:10px;padding:10px 12px;line-height:1.45}
-.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid #eef0f4}.row:first-of-type{border-top:0}
-.row .d{width:10px;height:10px;border-radius:50%;background:#22a565}.row .d.pa{background:#f0a020}.row b{font-size:15px}.row small{display:block;color:#7a8396;font-size:13px;margin-top:2px}
-.row .r{font-size:13px;color:#7a8396;text-align:right}.empty{color:#9aa2b2;font-size:15px;padding:24px 0;text-align:center}
-.tag{font-size:11px;font-weight:700;color:#8a5cf6;background:#f1ebff;border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:middle}
-.cmp{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:14px}.ct{font-size:13px;color:#7a8396;font-weight:600;margin-right:4px}
-.dl{display:inline-flex;align-items:baseline;gap:6px;border-radius:9px;padding:6px 10px;font-size:15px;font-weight:650;font-variant-numeric:tabular-nums}.dl small{font-size:12px;font-weight:500;opacity:.8}
-.dl.up{background:#e3f7ec;color:#14804a}.dl.dn{background:#fde8e8;color:#b42318}.dl.eq{background:#f1f3f7;color:#596275}
-.banner{background:#f1ebff;color:#5b3ab8;border-radius:12px;padding:9px 14px;font-size:14px}
-@media (max-width:900px){.u,.b{grid-template-columns:1fr;grid-template-rows:none}.sg{grid-column:auto}}
-@media (max-width:900px) and (min-width:601px){.app{padding:30px}.u .card:first-child{display:grid;grid-template-columns:200px 1fr;gap:0 24px;align-items:center}.u .card:first-child h3{grid-column:1/3}.ring{margin:0;grid-row:2/5}.kv{grid-column:2}.u{grid-template-rows:auto 1fr auto}.b{grid-template-rows:auto 1fr}}
-@media (max-width:600px){.app{padding:14px 14px 6px;gap:10px}.brand small{display:none}.top{flex-wrap:wrap}.tabs{margin:0;width:100%}.tabs span{flex:1;text-align:center;padding:8px 4px;font-size:14px}
-.main{gap:10px}.card{padding:14px 16px;border-radius:16px}h3{margin-bottom:10px}
-.u .card:first-child{display:grid;grid-template-columns:118px 1fr;gap:0 16px;align-items:center}.u .card:first-child h3{grid-column:1/3}
-.ring{width:112px;height:112px;margin:0;grid-row:2/5}.kv{grid-column:2}.u{grid-template-rows:auto 1fr auto}.ring div{width:88px;height:88px}.ring b{font-size:24px}.ring small{font-size:11px}.kv{font-size:14px;padding:6px 0}
-.bar{margin-bottom:9px}.bar:nth-of-type(n+6){display:none}.sg{flex-wrap:wrap;gap:8px;padding:12px 16px}.pill{font-size:14px;white-space:normal}.chg{margin:0}
-.hero .when{font-size:26px}.tiles{grid-template-columns:repeat(2,1fr);gap:8px}.tile{padding:9px 12px}.tile b{font-size:22px}.tiles{flex:none}.chips{margin:10px 0}
-.row{padding:9px 0}.det{display:none}.empty{padding:12px 0}.bars{justify-content:flex-start;gap:9px}.row:nth-of-type(n+4){display:none}.note{font-size:13px}}
-.foot{display:flex;justify-content:center;align-items:center;flex-shrink:0;padding:2px 0 0}
-.foot a{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 18px;text-decoration:none;color:#7a8396;line-height:1}
-.foot img{width:18px;height:auto;display:block;pointer-events:none;flex-shrink:0}
-.foot span{font-size:13px;font-weight:500;letter-spacing:.2px;color:#7a8396}
-'''
-TABS=[('usage',T('用量','Usage')),('backups',T('備份紀錄','Backups')),('restores',T('回復紀錄','Restores'))]
-def chips(ls): return ''.join(f'<span class=chip><i>{ICON.get(l.get("type"),"•")}</i>{e(LOC.get(l.get("type"),l.get("type","")))}</span>' for l in ls)
-def tag(r): return f'<span class=tag>{T("示例","SAMPLE")}</span>' if r.get('sample') else ''
-def usage():
-    try: pc=float(snap['used'].rstrip('%'))
-    except Exception: pc=0
-    bots=sorted(snap['bots'].items(),key=lambda x:-x[1]['share']);mx=max([v['share'] for _,v in bots]+[1])
-    bars=''.join(f'<div class="bar{" x" if any(s in b.lower() for s in SPECIAL) else ""}"><span>{e(DN(b))}</span><b>{v["share"]:g}%</b><i style="--w:{v["share"]/mx*100:.0f}"></i></div>' for b,v in bots[:7]) or f'<div class=empty>{T("未有用量資料","No usage data yet")}</div>'
-    sp=''.join(f'<span class=pill>{e(s[2])}</span>' for s in sug) or f'<span class="pill m">{NONE}</span>'
-    ch=(T(f'新增 {len(new)} 項・增加 {len(up)} 項',f'{len(new)} new · {len(up)} up') if old else T('首次記錄，下次開始比較','First snapshot'))
-    return f'''<div class="main u"><div class=card><h3>{T("本週用量","This week")}</h3><div class=ring style="--p:{pc}"><div><span><b>{e(snap['used'] or '—')}</b><small>{T("已用","used")}</small></span></div></div>
-<div class=kv><span>{T("重設","Resets")}</span><b>{e(RESET or '—')}</b></div><div class=kv><span>{T("尚餘時間","Time left")}</span><b>{e(LEFT or '—')}</b></div><div class=kv><span>{T("方案","Plan")}</span><b>{e(snap['plan'] or '—')}</b></div></div>
-<div class=card><h3>{T("各 bot 佔比","Share by bot")}</h3><div class=bars>{bars}</div></div><div class="card sg"><span class=t>💡 {T("建議","Suggestions")}</span>{sp}<span class=chg>{ch}</span></div></div>'''
-def backups():
-    if not BK: return f'<div class="main"><div class=card><div class=empty>{T("未有備份紀錄。按主選單「即時備份」開始。","No backups yet.")}</div></div></div>'
-    r=BK[0];c=r.get('counts',{});pa=r.get('status')!='complete'
-    tiles=''.join(f'<div class=tile><b>{c.get(k,"—")}</b><span>{lab}</span></div>' for k,lab in CN)
-    note=f'<div class=note>{e(r.get("notes",""))}</div>' if r.get('notes') else ''
-    d=diff(r,BK[1] if len(BK)>1 else None)
-    if d:
-        it=[(T(CNAME[k][0],CNAME[k][1]),sg(v),v) for k,v in d['counts'].items()]+[(T('角色','Role'),'+'+x,1) for x in d['roles_added']]+[(T('角色','Role'),'−'+x,-1) for x in d['roles_removed']]
-        if d['size_mb'] is not None: it.append((T('大小','Size'),('+' if d['size_mb']>=0 else '−')+fmt_mb(abs(d['size_mb'])),d['size_mb']))
-        stag=('<span class=tag>'+T('示例','SAMPLE')+'</span>') if d['sample'] else ''
-        cmp=f'<div class=cmp><span class=ct>{T("與上次比較","vs previous")}{stag}</span>'+''.join(f'<span class="dl {"up" if v>0 else "dn" if v<0 else "eq"}"><small>{e(l)}</small>{e(t)}</span>' for l,t,v in it)+'</div>'
-    else: cmp=f'<div class=cmp><span class=ct>{diff_line(None)}</span></div>'
-    det=''.join(f'<div><span>{e(LOC.get(l.get("type"),l.get("type","")))}</span><code>{e(l.get("path",""))}</code></div>' for l in r.get('locations',[]))
-    lst=''.join(f'<div class=row><span class="d{" pa" if x.get("status")!="complete" else ""}"></span><div><b>{e(x.get("time",""))}</b>{tag(x)}<small>{e(locs(x))}</small></div><span class=r>{e(x.get("size",""))}<br>{ST(x.get("status"))}</span></div>' for x in BK[1:7]) or f'<div class=empty>{T("只有一次備份紀錄","Only one backup so far")}</div>'
-    return f'''<div class="main b"><div class="card hero"><h3>{T("最新備份","Latest backup")}</h3><div class=when>{e(r.get("time",""))}<span class="st {"pa" if pa else "ok"}">{ST(r.get("status"))}</span>{tag(r)}</div>
-<div class=sub>{ago(r.get("time",""))} · {r.get("roles","—")} {T("個角色","roles")} · {e(r.get("size",""))}</div><div class=chips>{chips(r.get("locations",[]))}</div><div class=tiles>{tiles}</div>{cmp}{note}<div class=det>{det}</div></div>
-<div class=card><h3>{T("較早的備份","Earlier backups")}</h3>{lst}</div></div>'''
-def restores():
-    if not RS: return f'<div class="main"><div class=card><div class=empty>{T("未有回復紀錄","No restores yet")}</div></div></div>'
-    r=RS[0];ad=r.get('added',{});sm=any(x.get('sample') for x in RS)
-    rl=''.join(f'<span class="chip {"new" if x.get("mode")=="new" else "mg"}"><i>{"+" if x.get("mode")=="new" else "⇄"}</i>{e(x.get("name",""))}</span>' for x in r.get('roles',[]))
-    tiles=''.join(f'<div class=tile><b>{ad.get(k,0)}</b><span>{T("新增","Added")} {lab}</span></div>' for k,lab in CN[:3])+f'<div class=tile><b>{len(r.get("skipped",[]))}</b><span>{T("已略過","Skipped")}</span></div>'
-    det=''.join(f'<div><span>{e(x.get("name",""))}</span><code>{T("新建角色","New role") if x.get("mode")=="new" else T("合併到現有角色","Merged into existing")}</code></div>' for x in r.get('roles',[]))
-    sk=f'<div class=note>{T("略過","Skipped")}：{e("、".join(r.get("skipped",[])))}</div>' if r.get('skipped') else ''
-    lst=''.join(f'<div class=row><span class="d{" pa" if x.get("status")=="partial" else ""}"></span><div><b>{e(x.get("date",""))}</b>{tag(x)}<small>{T("來源","From")} {e(x.get("source",""))} · {e("、".join(y.get("name","") for y in x.get("roles",[])))}</small></div><span class=r>{len(x.get("roles",[]))} {T("個角色","roles")}</span></div>' for x in RS[1:7]) or f'<div class=empty>{T("只有一次回復紀錄","Only one restore so far")}</div>'
-    bn=f'<div class=banner>{T("示例資料：未有真實回復紀錄，只供測試顯示。","Sample data: no real restores yet; shown for testing only.")}</div>' if sm else ''
-    return f'''{bn}<div class="main b"><div class="card hero"><h3>{T("最新回復","Latest restore")}</h3><div class=when>{e(r.get("date",""))}{tag(r)}</div>
-<div class=sub>{T("來源備份","Source backup")} {e(r.get("source",""))} · {ago(r.get("date",""))}</div><div class=chips>{rl}</div><div class=tiles>{tiles}</div>{sk}<div class=det>{det}</div></div>
-<div class=card><h3>{T("較早的回復","Earlier restores")}</h3>{lst}</div></div>'''
-BODY={'usage':usage,'backups':backups,'restores':restores}
-MINNY_M='data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20380%20258%22%20role%3D%22img%22%20aria-label%3D%22m%22%3E%3Cpath%20fill%3D%22%239acba4%22%20fill-rule%3D%22evenodd%22%20d%3D%22M347.69%2C29.00%20C341.57%2C19.22%20336.28%2C14.14%20328.00%2C9.31%20C319.72%2C4.49%20305.50%2C1.23%20298.00%2C0.06%20C290.50%2C-1.10%20289.17%2C0.27%20283.00%2C2.31%20C276.83%2C4.35%20271.33%2C4.54%20261.00%2C12.31%20C250.67%2C20.08%20229.17%2C42.22%20221.00%2C48.94%20C212.83%2C55.66%20214.83%2C52.33%20212.00%2C52.62%20C209.17%2C52.92%20208.67%2C53.91%20204.00%2C50.69%20C199.33%2C47.47%20189.83%2C37.08%20184.00%2C33.31%20C178.17%2C29.54%20175.00%2C28.77%20169.00%2C28.06%20C163.00%2C27.35%20155.17%2C27.12%20148.00%2C29.06%20C140.83%2C31.00%20131.67%2C37.70%20126.00%2C39.69%20C120.33%2C41.68%20119.33%2C43.56%20114.00%2C41.00%20C108.67%2C38.44%20100.83%2C28.76%2094.00%2C24.31%20C87.17%2C19.86%2078.67%2C16.19%2073.00%2C14.31%20C67.33%2C12.44%2065.50%2C11.90%2060.00%2C13.06%20C54.50%2C14.23%2047.45%2C15.32%2040.00%2C21.31%20C32.55%2C27.30%2021.14%2C38.89%2015.31%2C49.00%20C9.49%2C59.11%207.60%2C59.50%205.06%2C82.00%20C2.52%2C104.50%200.02%2C162.67%200.06%2C184.00%20C0.10%2C205.33%202.60%2C201.83%205.31%2C210.00%20C8.02%2C218.17%2010.86%2C226.29%2016.31%2C233.00%20C21.76%2C239.71%2031.05%2C246.43%2038.00%2C250.25%20C44.95%2C254.07%2050.33%2C254.82%2058.00%2C255.94%20C65.67%2C257.05%2075.67%2C258.44%2084.00%2C256.94%20C92.33%2C255.44%20102.29%2C250.59%20108.00%2C246.94%20C113.71%2C243.28%20115.59%2C239.82%20118.25%2C235.00%20C120.91%2C230.18%20123.75%2C230.33%20123.94%2C218.00%20C124.12%2C205.67%20119.65%2C173.67%20119.38%2C161.00%20C119.10%2C148.33%20120.53%2C147.45%20122.31%2C142.00%20C124.09%2C136.55%20126.45%2C131.80%20130.06%2C128.31%20C133.68%2C124.82%20139.51%2C121.73%20144.00%2C121.06%20C148.49%2C120.40%20152.79%2C121.16%20157.00%2C124.31%20C161.21%2C127.47%20166.43%2C134.39%20169.25%2C140.00%20C172.07%2C145.61%20172.97%2C149.33%20173.94%2C158.00%20C174.91%2C166.67%20173.54%2C184.00%20175.06%2C192.00%20C176.58%2C200.00%20179.24%2C202.34%20183.06%2C206.00%20C186.89%2C209.66%20192.18%2C212.90%20198.00%2C213.94%20C203.82%2C214.98%20212.68%2C214.07%20218.00%2C212.25%20C223.32%2C210.43%20226.32%2C207.38%20229.94%2C203.00%20C233.55%2C198.62%20235.39%2C199.17%20239.69%2C186.00%20C243.99%2C172.83%20250.36%2C136.67%20255.75%2C124.00%20C261.14%2C111.33%20267.30%2C111.33%20272.00%2C110.00%20C276.70%2C108.67%20280.78%2C112.50%20283.94%2C116.00%20C287.09%2C119.50%20289.43%2C124.00%20290.94%2C131.00%20C292.45%2C138.00%20293.49%2C145.33%20293.00%2C158.00%20C292.51%2C170.67%20287.45%2C195.00%20288.00%2C207.00%20C288.55%2C219.00%20292.81%2C224.89%20296.31%2C230.00%20C299.81%2C235.11%20304.05%2C236.12%20309.00%2C237.69%20C313.95%2C239.25%20317.67%2C240.38%20326.00%2C239.38%20C334.33%2C238.38%20350.72%2C235.92%20359.00%2C231.69%20C367.28%2C227.46%20372.35%2C223.11%20375.69%2C214.00%20C379.02%2C204.89%20379.46%2C195.17%20379.00%2C177.00%20C378.54%2C158.83%20375.32%2C123.17%20372.94%2C105.00%20C370.55%2C86.83%20368.90%2C80.67%20364.69%2C68.00%20C360.48%2C55.33%20353.80%2C38.78%20347.69%2C29.00%20Z%22%2F%3E%3Cg%20id%3D%22eyes%22%3E%3Cellipse%20cx%3D%22110.64%22%20cy%3D%2297.70%22%20rx%3D%2216.79%22%20ry%3D%2219.08%22%20fill%3D%22%2338312d%22%2F%3E%3Cellipse%20cx%3D%22106.22%22%20cy%3D%2291.44%22%20rx%3D%223.05%22%20ry%3D%223.05%22%20fill%3D%22%23ffffff%22%2F%3E%3Cellipse%20cx%3D%22225.10%22%20cy%3D%2292.36%22%20rx%3D%2216.02%22%20ry%3D%2219.08%22%20fill%3D%22%2338312d%22%2F%3E%3Cellipse%20cx%3D%22220.37%22%20cy%3D%2285.64%22%20rx%3D%223.05%22%20ry%3D%223.05%22%20fill%3D%22%23ffffff%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E%0A'
-FOOT=f'<div class=foot><a href="https://minny.app" target="_blank" rel="noopener noreferrer" aria-label="minny.app"><img src="{MINNY_M}" alt="" width="18"><span>minny.app</span></a></div>'
-out=os.path.abspath(a.out or a.dir);os.makedirs(out,exist_ok=True)
-w,h=(int(x) for x in a.view.lower().split('x'));br=next((x for x in ('chromium','chromium-browser','google-chrome','google-chrome-stable') if shutil.which(x)),None)
-res={}
-for k,lab in TABS:
-    tabs=''.join(f'<span class="{"on" if kk==k else ""}">{ll}</span>' for kk,ll in TABS)
-    page=f'<!doctype html><html lang={"zh-Hant" if Z else "en"}><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><style>{CSS}</style></head><body><div class=app><div class=top><div class=logo>⛨</div><div class=brand><b>{T("備份回復專員","Backup & Restore Officer")}</b><small>{T("更新於","Updated")} {NOW.strftime("%Y-%m-%d %H:%M")}</small></div><div class=tabs>{tabs}</div></div>{BODY[k]()}{FOOT}</div></body></html>'
-    hp=os.path.join(out,f'dash-{k}-{w}x{h}.html');pp=hp[:-5]+'.png';open(hp,'w',encoding='utf-8').write(page);ok=False
-    if br:
-        try:
-            subprocess.run([br,'--headless=new','--no-sandbox','--disable-gpu','--hide-scrollbars',f'--window-size={w},{h}','--force-device-scale-factor=2',f'--screenshot={pp}','file://'+hp],capture_output=True,timeout=60);ok=os.path.exists(pp)
-        except Exception: ok=False
-    res[k]=pp if ok else None
-menu=[T('用量','Usage'),T('備份紀錄','Backups'),T('回復紀錄','Restores'),T('更新','Refresh')]+[T('照做：','Do it: ')+s[2] for s in sug]+[T('返回主選單','Back to main menu')]
-print(json.dumps({'png':res,'text':TX,'suggestions':[{'kind':s[1],'text':s[2],'targets':s[3]} for s in sug],'menu':menu},ensure_ascii=False,indent=1))
+    'backups':'\n'.join([T('備份紀錄','Backup log')]+[f"- {r.get('time')} · {locs(r)} · {ST(r.get('status'))}" for r in BK[:6]] or [T('未有備份紀錄','No backups yet')]),
+    'restores':'\n'.join([T('回復紀錄','Restore log')]+[f"- {r.get('date')} · {T('來源','from')} {r.get('source')} · "+', '.join(x.get('name','') for x in r.get('roles',[])) for r in RS[:6]] or [T('未有回復紀錄','No restores yet')])}
+bots_out=[{'name':DN(b),'share':v['share'],
+    'routines':[{'name':rn,'share':rv['share'],'runs':rv.get('runs'),'trigger':bool(rv.get('trigger'))} for rn,rv in v.get('routines',{}).items()],
+    'chat':v.get('chat')} for b,v in sorted(snap['bots'].items(),key=lambda x:-x[1]['share'])]
+bk_out=[]
+for i,r in enumerate(BK[:12]):
+    item={'time':r.get('time'),'ago':ago(r.get('time','')),'locations':[{'type':l.get('type'),'label':LOC.get(l.get('type'),l.get('type','')),'path':l.get('path','')} for l in r.get('locations',[])],
+          'roles':r.get('roles'),'counts':r.get('counts') or {},'size':r.get('size',''),'status':r.get('status'),'status_label':ST(r.get('status')),'notes':r.get('notes') or ''}
+    if i==0:
+        d=diff(r,BK[1] if len(BK)>1 else None)
+        item['diff_line']=diff_line(d);item['diff']=d
+    bk_out.append(item)
+rs_out=[{'date':r.get('date'),'ago':ago(r.get('date','')),'source':r.get('source',''),
+         'roles':[{'name':x.get('name',''),'mode':x.get('mode','')} for x in r.get('roles',[])],
+         'added':r.get('added') or {},'skipped':r.get('skipped') or [],'status':r.get('status')} for r in RS[:12]]
+menu=[T('更新','Refresh')]+[T('照做：','Do it: ')+s[2] for s in sug]+[T('返回主選單','Back to main menu')]
+out={
+ 'lang':'zh' if Z else 'en',
+ 'updated':NOW.strftime('%Y-%m-%d %H:%M'),
+ 'usage':{'time':snap.get('time',''),'plan':snap.get('plan',''),'used':snap.get('used',''),'reset':RESET,'left':LEFT,
+          'period':snap.get('period',''),'bots':bots_out,
+          'compare':{'new':len(new),'up':len(up),'first':not bool(old)},
+          'suggestions_none':NONE},
+ 'backups':bk_out,
+ 'restores':rs_out,
+ 'text':TX,
+ 'suggestions':[{'kind':s[1],'text':s[2],'targets':s[3]} for s in sug],
+ 'menu':menu,
+ 'footer':{'mark':'m','label':'minny.app','href':'https://minny.app'},
+ 'tabs':[{'id':'usage','label':T('用量','Usage')},{'id':'backups','label':T('備份紀錄','Backups')},{'id':'restores','label':T('回復紀錄','Restores')}],
+ 'title':T('備份回復專員','Backup & Restore Officer'),
+ 'summary':T(f"每週用量上限已用 {snap.get('used') or '—'}，重設：{RESET or '—'}（{LEFT or '—'}）",
+             f"Weekly usage limit {snap.get('used') or '—'} used; resets {RESET or '—'} ({LEFT or '—'})")
+}
+print(json.dumps(out,ensure_ascii=False,indent=1))
 ```
 
 ## 儲存位置
-預設存於 bot 自己的電腦 `Bot 備份/`，毋須登入，手機亦適用。這不是獨立的異地副本，電腦重設或遺失時可能一併遺失。
+預設存於 bot 自己的電腦 `/workspace/Bot 備份/`，毋須登入，手機亦適用。這不是獨立的異地副本，電腦重設或遺失時可能一併遺失。
 設定時不問雲端儲存。選「雲端副本」時，首次選 Google Drive 或 Notion，之後沿用目的地。未連接才顯示相應連接卡一次，日後重用連接，授權失效才重連。複製最新備份；尚無備份則先在 bot 電腦備份。檔案限制或連接器造成缺漏時須報告，不稱雲端副本完整。
-只有當用戶目前訊息明確帶有桌面來源標記（例如 `[Sent from machine …]`），才在主選單加上「複製到這部電腦／外置硬碟」。不得猜測裝置，沒有標記就不顯示；有標記亦不代表電腦在線。用戶選擇並批准目的地後，使用 CopyFromBox，遵從本機工具批准；離線則保留 bot 電腦上的備份並報告待複製。
+主選單一律顯示「複製到這部電腦／外置硬碟」。若目前訊息帶有桌面來源標記（例如 `[Sent from machine …]`），選擇後確認目的地，使用 CopyFromBox，遵從本機工具批准；離線則保留 bot 電腦上的備份並報告待複製。有標記亦不代表電腦在線。若無標記（例如用手機），只簡短回覆：須在電腦開啟本 bot 對話並再選此項；其間備份仍留在 bot 電腦。不得猜測裝置。
 
 ## 進階觸發（只在用戶提出時協助設置）
 用戶如想不開 app 就觸發即時備份，可協助設置：webhook 觸發的定時任務（配合 iPhone 捷徑或 NAS 呼叫），或寄電郵到專用地址觸發。開始使用的對話不主動提出。
