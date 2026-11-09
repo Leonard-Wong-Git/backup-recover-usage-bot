@@ -1,0 +1,11 @@
+This folder will hold only:
+
+  m.svg
+  BRAND.md
+  TRADEMARK.md
+
+m.svg is already included (unmodified).
+
+BRAND.md and TRADEMARK.md are supplied separately (written by Claude in his folder).
+Copy them here and DELETE this PLACEHOLDER.txt before publishing the repo.
+Do not add the full wordmark, local paths, or private brand repository names.
